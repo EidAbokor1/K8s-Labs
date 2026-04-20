@@ -46,3 +46,9 @@ terraform apply
 kubectl apply -f cert-man/issuer.yml
 kubectl apply -f argocd/app-argo.yml
 ```
+
+## Cleanup
+
+```bash
+./scripts/cleanup.sh
+```
