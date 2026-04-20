@@ -1,0 +1,14 @@
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: issuer
+    hosts:
+      - argocd.eiddev.xyz
+    tls:
+      - secretName: argocd-tls
+        hosts:
+          - argocd.eiddev.xyz
+  extraArgs:
+    - --insecure
