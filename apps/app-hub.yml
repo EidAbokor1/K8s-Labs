@@ -58,7 +58,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: the-app-hub
+            name: the-app-hub-service
             port:
               number: 80
   tls:
