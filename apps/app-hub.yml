@@ -1,4 +1,4 @@
-apiVersion: argoproj.io/v1alpha1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: the-app-hub
