@@ -34,4 +34,5 @@ echo "Waiting 60s for AWS resources to clean up..."
 sleep 60
 
 # 7. Destroy infrastructure (handles Helm releases, EKS, VPC, IAM)
+cd terraform
 terraform destroy -auto-approve

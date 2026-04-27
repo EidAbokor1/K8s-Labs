@@ -4,6 +4,7 @@ metadata:
   name: the-app-hub
   labels:
     app: the-app-hub
+  namespace: my-app
 spec:
   replicas: 1
   selector:
@@ -14,18 +15,51 @@ spec:
       labels:
         app: the-app-hub
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 10000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: the-app-hub
         image: moabukar/the-app-hub:22e0324
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
 
----  
+---
+
 apiVersion: v1
 kind: Service
 metadata:
   name: the-app-hub-service
-
+  namespace: my-app
 spec:
   selector:
     app: the-app-hub
@@ -45,6 +79,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  namespace: my-app
   name: the-app-hub-ingress
   annotations:
     cert-manager.io/cluster-issuer: "issuer"
@@ -65,3 +100,25 @@ spec:
   - hosts:
     - app-hub.eiddev.xyz
     secretName: the-app-hub-tls
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: the-app-hub-networkpolicy
+  namespace: my-app
+spec:
+  podSelector:
+    matchLabels:
+      app: the-app-hub
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000

@@ -1,0 +1,19 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: check-yaml
+        args: ['--allow-multiple-documents']
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+
+-   repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.105.0
+    hooks:
+    -   id: terraform_fmt
+
+-   repo: https://github.com/bridgecrewio/checkov.git
+    rev: 3.2.525
+    hooks:
+      - id: checkov
+        args: ['--skip-check', 'CKV_TF_1,CKV_K8S_43']
