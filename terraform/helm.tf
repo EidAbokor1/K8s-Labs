@@ -61,3 +61,23 @@ resource "helm_release" "argocd_deploy" {
   ]
 
 }
+
+resource "helm_release" "kube_prometheus_stack" {
+  name       = "kube-prometheus-stack"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "kube-prometheus-stack"
+  version    = "84.3.0"
+
+  create_namespace = true
+  namespace        = "monitoring"
+
+  set {
+    name  = "grafana.adminPassword"
+    value = "admin"
+  }
+
+  values = [
+    "${file("../helm-values/kube-prometheus-stack.yml")}"
+  ]
+
+}

@@ -1,0 +1,12 @@
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: issuer
+    hosts:
+      - grafana.eiddev.xyz
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.eiddev.xyz
