@@ -1,0 +1,55 @@
+name: infra pipeline
+on:
+    pull_request:
+        branches: [ "main" ]
+    push:
+        branches: ["main"]
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./terraform
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6.0.2
+
+            - name: AWS creds
+              uses: aws-actions/configure-aws-credentials@v6.1.0
+              with:
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                aws-region: eu-west-2
+
+            - name: terraform setup
+              uses: hashicorp/setup-terraform@v4.0.0
+
+            - name: terraform init
+              run: terraform init
+
+            - name: terraform fmt
+              run: terraform fmt -check
+
+            - name: terraform validate
+              run: terraform validate
+
+            - name: Checkov GitHub Action
+              uses: bridgecrewio/checkov-action@master
+              with:
+                 directory: ./terraform
+
+            - name: Grype Scan
+              uses: anchore/scan-action@v7.4.0
+              with:
+                path: "./terraform"
+                fail-build: true
+
+            - name: terraform plan
+              run: terraform plan
+
+            - name: terraform apply
+              if: github.event_name == 'push'
+              run: terraform apply -auto-approve
