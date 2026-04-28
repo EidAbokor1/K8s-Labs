@@ -5,7 +5,6 @@ module "eks" {
   cluster_name    = local.name
   cluster_version = "1.31"
 
-
   cluster_endpoint_public_access       = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
@@ -25,16 +24,20 @@ module "eks" {
   }
 
   enable_cluster_creator_admin_permissions = true
+
   access_entries = {
     github_actions = {
       principal_arn = "arn:aws:iam::275333454194:role/cicd-k8s-lab"
       policy_associations = {
         admin = {
-          policy_arn        = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope_type = "cluster"
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
         }
       }
     }
   }
+
   tags = local.tags
 }
