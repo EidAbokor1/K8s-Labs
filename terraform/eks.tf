@@ -24,5 +24,17 @@ module "eks" {
     default = {}
   }
 
+  enable_cluster_creator_admin_permissions = true
+  access_entries = {
+    github_actions = {
+      principal_arn = "arn:aws:iam::275333454194:role/cicd-k8s-lab"
+      policy_associations = {
+        view = {
+          policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterViewPolicy"
+        }
+
+      }
+    }
+  }
   tags = local.tags
 }
