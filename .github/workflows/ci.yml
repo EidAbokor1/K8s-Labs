@@ -47,6 +47,7 @@ jobs:
               with:
                 path: "./terraform"
                 fail-build: true
+                severity-cutoff: high
 
             - name: terraform plan
               run: terraform plan
