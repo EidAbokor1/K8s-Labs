@@ -43,6 +43,15 @@ Production-grade EKS cluster deployed with Terraform, featuring automated TLS, D
 - **app-hub** — `app-hub.eiddev.xyz`
 - **Grafana** — `grafana.eiddev.xyz`
 
+### App Hub
+![App Hub](images/app-hub.png)
+
+### ArgoCD
+![ArgoCD](images/argocd.png)
+
+### Grafana
+![Grafana](images/grafana.png)
+
 ## Usage
 
 ```bash
