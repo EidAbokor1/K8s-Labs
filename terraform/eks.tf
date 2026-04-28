@@ -29,10 +29,10 @@ module "eks" {
     github_actions = {
       principal_arn = "arn:aws:iam::275333454194:role/cicd-k8s-lab"
       policy_associations = {
-        view = {
-          policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterViewPolicy"
+        admin = {
+          policy_arn        = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope_type = "cluster"
         }
-
       }
     }
   }
