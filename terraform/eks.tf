@@ -37,6 +37,17 @@ module "eks" {
         }
       }
     }
+    local_admin = {
+      principal_arn = "arn:aws:iam::275333454194:role/Admin"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
   }
 
   tags = local.tags
