@@ -48,6 +48,10 @@ jobs:
                 path: "./terraform"
                 fail-build: false
 
+            - name: terraform import cluster creator
+              run: terraform import 'module.eks.aws_eks_access_entry.this["cluster_creator"]' eks-labs:${{ secrets.AWS_ROLE_ARN }}
+              continue-on-error: true
+
             - name: terraform plan
               run: terraform plan
 
