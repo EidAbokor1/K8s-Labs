@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EKS Platform Status</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1117;
+            color: #e1e4e8;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #58a6ff;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: #8b949e;
+            font-size: 1rem;
+        }
+        .status-banner {
+            text-align: center;
+            background: #16191f;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .status-banner span {
+            color: #3fb950;
+            font-weight: 600;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        .card:hover {
+            border-color: #58a6ff;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .card-header h3 {
+            font-size: 1.1rem;
+            color: #f0f6fc;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            background: #0d3321;
+            color: #3fb950;
+            border: 1px solid #238636;
+        }
+        .card p {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .card a {
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .card a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #484f58;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>EKS Platform Status</h1>
+        <p>Production cluster — eu-west-2</p>
+    </div>
+
+    <div class="status-banner">
+        <span>● All systems operational</span>
+    </div>
+
+    <div class="grid">
+        {% for component in components %}
+        <div class="card">
+            <div class="card-header">
+                <h3>{{ component.name }}</h3>
+                <span class="status-badge">{{ component.status }}</span>
+            </div>
+            <p>{{ component.description }}</p>
+            {% if component.url %}
+            <a href="{{ component.url }}" target="_blank">Open →</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer">
+        <p>EKS v1 • Managed by Terraform • Deployed via ArgoCD</p>
+    </div>
+</body>
+</html>

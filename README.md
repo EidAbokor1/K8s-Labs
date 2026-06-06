@@ -89,6 +89,25 @@ Authentication via OIDC — no static credentials.
 - Grype vulnerability scanning
 - Hardened Kubernetes deployments (security context, resource limits, health probes, NetworkPolicy)
 
+## What I Learnt
+
+- How IRSA (IAM Roles for Service Accounts) works — linking Kubernetes service accounts to AWS IAM roles via OIDC so pods get scoped permissions without static credentials
+- The importance of Helm dependency ordering — cert-manager CRDs must be installed before you can apply a ClusterIssuer, and external-dns needs its IRSA role ready before deployment
+- How the full TLS flow works end-to-end: Ingress annotation → cert-manager picks it up → creates a Certificate resource → uses DNS-01 challenge via Route 53 → stores the cert in a Kubernetes Secret → NGINX serves it
+- GitOps as a deployment model — ArgoCD reconciles cluster state with the Git repo, meaning the repo is the single source of truth
+- How NetworkPolicies enforce pod-level traffic control — only allowing ingress from the nginx-ingress namespace to the app pod
+- OIDC federation for CI/CD — GitHub Actions assumes an AWS role without any stored secrets, using short-lived tokens
+- The value of security scanning in pipelines — Checkov catches Terraform misconfigs and Grype flags vulnerable dependencies before they reach the cluster
+
+## Challenges Solved
+
+- **Helm chart version conflicts** — Some chart versions had breaking changes or deprecated values. Had to pin versions (e.g. ArgoCD `5.19.15`, kube-prometheus-stack `84.3.0`) and cross-reference changelogs to get compatible configurations
+- **cert-manager DNS-01 validation failing** — The IRSA role wasn't being assumed correctly because the service account annotation wasn't matching. Fixed by ensuring the namespace/service account pair in the IRSA module matched exactly what cert-manager deployed
+- **external-dns not updating Route 53** — Permissions were correct but the hosted zone filter wasn't set, so external-dns was trying to manage zones it shouldn't. Adding the domain filter in the Helm values resolved it
+- **Terraform dependency ordering** — Helm releases were attempting to deploy before the EKS cluster was fully ready. Solved by relying on implicit dependencies through the provider configuration and module outputs
+- **GitHub Actions OIDC trust policy** — The IAM role's trust policy needed the exact GitHub repo and branch conditions. Debugging this required checking CloudTrail for `AssumeRoleWithWebIdentity` failures
+- **Ingress not getting an external IP** — The NGINX ingress controller needed the AWS load balancer to provision in public subnets. Required correct subnet tagging (`kubernetes.io/role/elb = 1`) in the VPC Terraform config
+
 ## Cleanup
 
 ```bash
