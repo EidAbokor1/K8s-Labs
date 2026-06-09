@@ -1,8 +1,8 @@
-# EKS Kubernetes Lab
+# EKS Status Hub
 
 ## Overview
 
-Production-grade EKS cluster deployed with Terraform, featuring automated TLS, DNS management, GitOps with ArgoCD, monitoring with Prometheus/Grafana, and CI/CD with GitHub Actions.
+Production-grade EKS cluster deployed with Terraform, featuring an EKS Status Hub app to track the health of Kubernetes components, automated TLS, DNS management, GitOps with ArgoCD, monitoring with Prometheus/Grafana, and CI/CD with GitHub Actions.
 
 ## Tools Used
 
@@ -16,6 +16,9 @@ Production-grade EKS cluster deployed with Terraform, featuring automated TLS, D
 - **Prometheus** — Cluster metrics collection
 - **Grafana** — Metrics visualisation and dashboards
 - **GitHub Actions** — CI/CD pipeline
+- **Amazon ECR** — Container image registry
+- **Python/Flask** — EKS Status Hub app (tracks live status of K8s components)
+- **Gunicorn** — Production WSGI server
 - **Checkov** — Terraform and Kubernetes security scanning
 - **Grype** — Vulnerability scanning
 - **pre-commit** — Git hooks for code quality
@@ -35,16 +38,17 @@ Production-grade EKS cluster deployed with Terraform, featuring automated TLS, D
 | IRSA | cert-manager + external-dns |
 | State | S3 backend |
 | CI/CD | GitHub Actions (OIDC auth) |
+| Container Registry | Amazon ECR |
 | Monitoring | Prometheus + Grafana |
 
 ## Deployed Apps
 
 - **ArgoCD** — `argocd.eiddev.xyz`
-- **app-hub** — `app-hub.eiddev.xyz`
+- **eks-status-hub** — `app-hub.eiddev.xyz`
 - **Grafana** — `grafana.eiddev.xyz`
 
-### App Hub
-![App Hub](images/app-hub.png)
+### EKS Status Hub
+![EKS Status Hub](images/app-hub.png)
 
 ### ArgoCD
 ![ArgoCD](images/argocd.png)
@@ -74,20 +78,30 @@ make deploy
 | `make deploy` | Apply issuer + ArgoCD app |
 | `make cleanup` | Run cleanup script |
 
-## CI/CD Pipeline
+## CI/CD Pipelines
 
-GitHub Actions pipeline triggers on:
-- **Pull requests** → lint, security scan, terraform plan
-- **Push to main** → lint, security scan, terraform plan + apply
+Two separate pipelines:
 
-Authentication via OIDC — no static credentials.
+**Infra Pipeline (`ci.yml`)** — triggers on changes to `terraform/`
+- Pull requests → lint, security scan, terraform plan
+- Push to main → plan job first, then apply job (requires plan to pass)
+
+**Docker Pipeline (`docker.yml`)** — triggers on changes to `app/`
+- Grype vulnerability scan
+- Docker image build
+- Push to Amazon ECR tagged with Git commit SHA
+
+Authentication via OIDC — no static credentials stored anywhere.
 
 ## Security
 
 - Pre-commit hooks (YAML validation, Terraform fmt, Checkov)
 - Checkov scanning (Terraform + Kubernetes)
-- Grype vulnerability scanning
+- Grype vulnerability scanning on both Terraform and Docker image
 - Hardened Kubernetes deployments (security context, resource limits, health probes, NetworkPolicy)
+- Non-root container user (UID 10000)
+- Immutable ECR image tags
+- ECR images encrypted at rest with KMS
 
 ## What I Learnt
 
@@ -107,6 +121,8 @@ Authentication via OIDC — no static credentials.
 - **Terraform dependency ordering** — Helm releases were attempting to deploy before the EKS cluster was fully ready. Solved by relying on implicit dependencies through the provider configuration and module outputs
 - **GitHub Actions OIDC trust policy** — The IAM role's trust policy needed the exact GitHub repo and branch conditions. Debugging this required checking CloudTrail for `AssumeRoleWithWebIdentity` failures
 - **Ingress not getting an external IP** — The NGINX ingress controller needed the AWS load balancer to provision in public subnets. Required correct subnet tagging (`kubernetes.io/role/elb = 1`) in the VPC Terraform config
+- **EKS access entry conflicts** — The EKS Terraform module automatically creates a `cluster_creator` access entry which conflicted with manually defined entries, causing repeated pipeline failures. Fixed by setting `enable_cluster_creator_admin_permissions = false` and managing access entries explicitly
+- **Terraform apply locking out cluster access** — Destroying the Admin access entry mid-apply caused kubectl to lose access. Recovered by manually recreating the access entry via AWS CLI and reimporting into Terraform state
 
 ## Cleanup
 

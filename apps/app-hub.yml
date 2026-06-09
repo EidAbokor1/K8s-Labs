@@ -15,7 +15,8 @@ spec:
       labels:
         app: the-app-hub
     spec:
-      automountServiceAccountToken: false
+      automountServiceAccountToken: true
+      serviceAccountName: app-hub-sa
       securityContext:
         runAsUser: 10000
         runAsNonRoot: true
@@ -121,3 +122,34 @@ spec:
     ports:
     - protocol: TCP
       port: 5000
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-hub-sa
+  namespace: my-app
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: app-hub-reader
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: app-hub-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: app-hub-reader
+subjects:
+- kind: ServiceAccount
+  name: app-hub-sa
+  namespace: my-app
