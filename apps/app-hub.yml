@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: the-app-hub
-        image: 275333454194.dkr.ecr.eu-west-2.amazonaws.com/platform-status:d4478add2e613466a2196cf984aec97205265278
+        image: 275333454194.dkr.ecr.eu-west-2.amazonaws.com/platform-status:2b6ce743b1672a4bc525c6ace925d7bd64e9cdfd
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
