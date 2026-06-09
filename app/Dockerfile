@@ -3,7 +3,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
-RUN useradd -u 10000 nonrootuser
+RUN useradd -u 10000 -M nonrootuser
 USER nonrootuser
 EXPOSE 5000
 HEALTHCHECK CMD curl --fail http://localhost:5000/health
