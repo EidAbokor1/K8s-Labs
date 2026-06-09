@@ -23,6 +23,16 @@ Production-grade EKS cluster deployed with Terraform, featuring an EKS Status Hu
 - **Grype** — Vulnerability scanning
 - **pre-commit** — Git hooks for code quality
 
+## EKS Status Hub App
+
+A Python/Flask platform status page that tracks the live health of Kubernetes components by calling the Kubernetes API from inside the cluster.
+
+- Queries the K8s API for each component's deployment status
+- Displays `Healthy` (green), `Degraded` (red), or `Unknown` (yellow) per component
+- RBAC-scoped service account — only has `get` and `list` permissions on deployments
+- Served by Gunicorn behind NGINX Ingress with TLS
+- `/health` endpoint for Kubernetes liveness and readiness probes
+
 ## Architecture
 
 ![Architecture Diagram](images/architecture.png)
@@ -55,6 +65,9 @@ Production-grade EKS cluster deployed with Terraform, featuring an EKS Status Hu
 
 ### Grafana
 ![Grafana](images/grafana.png)
+
+### EKS Status Hub — Degraded State
+![Status Hub Degraded](images/app-hub-status-error.png)
 
 ## Usage
 
@@ -90,6 +103,8 @@ Two separate pipelines:
 - Grype vulnerability scan
 - Docker image build
 - Push to Amazon ECR tagged with Git commit SHA
+- Automatically updates image tag in `apps/app-hub.yml` and commits back to repo
+- ArgoCD detects the change and deploys the new image automatically
 
 Authentication via OIDC — no static credentials stored anywhere.
 
@@ -112,6 +127,9 @@ Authentication via OIDC — no static credentials stored anywhere.
 - How NetworkPolicies enforce pod-level traffic control — only allowing ingress from the nginx-ingress namespace to the app pod
 - OIDC federation for CI/CD — GitHub Actions assumes an AWS role without any stored secrets, using short-lived tokens
 - The value of security scanning in pipelines — Checkov catches Terraform misconfigs and Grype flags vulnerable dependencies before they reach the cluster
+- How the Kubernetes API works as a REST API — making HTTP GET requests from inside a pod using a service account token to query deployment health
+- RBAC in practice — scoping a service account to only the permissions it needs (get/list deployments) rather than cluster-wide access
+- GitOps image tag automation — the CI pipeline commits the new image SHA back to the repo so ArgoCD can deploy without any manual steps
 
 ## Challenges Solved
 
