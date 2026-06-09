@@ -6,7 +6,7 @@ on:
           - "app/**"
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
     build:
@@ -39,3 +39,13 @@ jobs:
               run: |
                 docker build -t ${{ env.ECR_REGISTRY }}/platform-status:${{ github.sha }} .
                 docker push ${{ env.ECR_REGISTRY }}/platform-status:${{ github.sha }}
+
+            - name: Update image tag
+              working-directory: ./apps
+              run: |
+                sed -i "s|platform-status:.*|platform-status:${{ github.sha }}|" app-hub.yml
+                git config user.name "github-actions"
+                git config user.email "github-actions@github.com"
+                git add app-hub.yml
+                git commit -m "chore: update image tag to ${{ github.sha }}"
+                git push
