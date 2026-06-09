@@ -23,7 +23,7 @@ module "eks" {
     default = {}
   }
 
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
 
   access_entries = {
     github_actions = {
