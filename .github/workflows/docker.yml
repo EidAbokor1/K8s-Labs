@@ -3,7 +3,7 @@ on:
     push:
         branches: ["main"]
         paths:
-          - "app/"
+          - "app/**"
 permissions:
   id-token: write
   contents: read
