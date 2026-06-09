@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-    build:
+    plan:
         runs-on: ubuntu-latest
         defaults:
             run:
@@ -50,7 +50,29 @@ jobs:
 
             - name: terraform plan
               run: terraform plan
+    apply:
+      runs-on: ubuntu-latest
+      needs: plan
+      if: github.event_name == 'push'
+      defaults:
+        run:
+          working-directory: ./terraform
 
-            - name: terraform apply
-              if: github.event_name == 'push'
-              run: terraform apply -auto-approve
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v6.0.2
+
+        - name: AWS creds
+          uses: aws-actions/configure-aws-credentials@v6.1.0
+          with:
+            role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+            aws-region: eu-west-2
+
+        - name: terraform setup
+          uses: hashicorp/setup-terraform@v4.0.0
+
+        - name: terraform init
+          run: terraform init
+
+        - name: terraform apply
+          run: terraform apply -auto-approve
