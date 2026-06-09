@@ -2,8 +2,12 @@ name: infra pipeline
 on:
     pull_request:
         branches: [ "main" ]
+        paths:
+          - "terraform/**"
     push:
         branches: ["main"]
+        paths:
+          - "terraform/**"
 permissions:
   id-token: write
   contents: read
