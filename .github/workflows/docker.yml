@@ -2,6 +2,8 @@ name: docker-pipeline
 on:
     push:
         branches: ["main"]
+        paths:
+          - "app/"
 permissions:
   id-token: write
   contents: read
