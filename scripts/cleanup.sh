@@ -33,6 +33,12 @@ kubectl delete namespace my-app --ignore-not-found
 echo "Waiting 60s for AWS resources to clean up..."
 sleep 60
 
-# 7. Destroy infrastructure (handles Helm releases, EKS, VPC, IAM)
+# 7. Empty ECR repository
+aws ecr batch-delete-image \
+  --repository-name platform-status \
+  --image-ids "$(aws ecr list-images --repository-name platform-status --query 'imageIds[*]' --output json)" \
+  --region eu-west-2 || true
+
+# 8. Destroy infrastructure (handles Helm releases, EKS, VPC, IAM)
 cd terraform
 terraform destroy -auto-approve

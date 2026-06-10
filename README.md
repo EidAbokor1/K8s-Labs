@@ -32,6 +32,7 @@ A Python/Flask platform status page that tracks the live health of Kubernetes co
 - RBAC-scoped service account — only has `get` and `list` permissions on deployments
 - Served by Gunicorn behind NGINX Ingress with TLS
 - `/health` endpoint for Kubernetes liveness and readiness probes
+- HPA configured to scale between 1-3 replicas based on CPU utilisation
 
 ## Architecture
 
@@ -50,6 +51,7 @@ A Python/Flask platform status page that tracks the live health of Kubernetes co
 | CI/CD | GitHub Actions (OIDC auth) |
 | Container Registry | Amazon ECR |
 | Monitoring | Prometheus + Grafana |
+| Autoscaling | HPA (min 1, max 3 replicas) |
 
 ## Deployed Apps
 
