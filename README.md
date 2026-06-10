@@ -122,27 +122,58 @@ Authentication via OIDC — no static credentials stored anywhere.
 
 ## What I Learnt
 
-- How IRSA (IAM Roles for Service Accounts) works — linking Kubernetes service accounts to AWS IAM roles via OIDC so pods get scoped permissions without static credentials
-- The importance of Helm dependency ordering — cert-manager CRDs must be installed before you can apply a ClusterIssuer, and external-dns needs its IRSA role ready before deployment
-- How the full TLS flow works end-to-end: Ingress annotation → cert-manager picks it up → creates a Certificate resource → uses DNS-01 challenge via Route 53 → stores the cert in a Kubernetes Secret → NGINX serves it
-- GitOps as a deployment model — ArgoCD reconciles cluster state with the Git repo, meaning the repo is the single source of truth
-- How NetworkPolicies enforce pod-level traffic control — only allowing ingress from the nginx-ingress namespace to the app pod
-- OIDC federation for CI/CD — GitHub Actions assumes an AWS role without any stored secrets, using short-lived tokens
-- The value of security scanning in pipelines — Checkov catches Terraform misconfigs and Grype flags vulnerable dependencies before they reach the cluster
-- How the Kubernetes API works as a REST API — making HTTP GET requests from inside a pod using a service account token to query deployment health
-- RBAC in practice — scoping a service account to only the permissions it needs (get/list deployments) rather than cluster-wide access
-- GitOps image tag automation — the CI pipeline commits the new image SHA back to the repo so ArgoCD can deploy without any manual steps
+**IRSA (IAM Roles for Service Accounts)**
+How to link Kubernetes service accounts to AWS IAM roles via OIDC so pods get scoped permissions without static credentials.
+
+**Helm Dependency Ordering**
+cert-manager CRDs must be installed before applying a ClusterIssuer, and external-dns needs its IRSA role ready before deployment. Order matters.
+
+**End-to-End TLS Flow**
+Ingress annotation triggers cert-manager, which creates a Certificate resource, runs a DNS-01 challenge via Route 53, and stores the resulting cert as a Kubernetes Secret. NGINX then serves it automatically.
+
+**GitOps with ArgoCD**
+ArgoCD reconciles cluster state with the Git repo continuously. The repo is the single source of truth — any manual change to the cluster gets reverted.
+
+**NetworkPolicies**
+How to enforce pod-level traffic control, restricting ingress to only the nginx-ingress namespace so no other pod can reach the app directly.
+
+**OIDC Federation for CI/CD**
+GitHub Actions assumes an AWS IAM role using short-lived tokens via OIDC. No static credentials stored anywhere.
+
+**Kubernetes as a REST API**
+Making HTTP GET requests from inside a pod using a mounted service account token to query deployment health and display it in a Flask app.
+
+**RBAC in Practice**
+Scoping a service account to only `get` and `list` on deployments rather than giving it broad cluster access.
+
+**GitOps Image Tag Automation**
+The CI pipeline commits the new image SHA back to the repo after every build so ArgoCD deploys the latest version without any manual steps.
 
 ## Challenges Solved
 
-- **Helm chart version conflicts** — Some chart versions had breaking changes or deprecated values. Had to pin versions (e.g. ArgoCD `5.19.15`, kube-prometheus-stack `84.3.0`) and cross-reference changelogs to get compatible configurations
-- **cert-manager DNS-01 validation failing** — The IRSA role wasn't being assumed correctly because the service account annotation wasn't matching. Fixed by ensuring the namespace/service account pair in the IRSA module matched exactly what cert-manager deployed
-- **external-dns not updating Route 53** — Permissions were correct but the hosted zone filter wasn't set, so external-dns was trying to manage zones it shouldn't. Adding the domain filter in the Helm values resolved it
-- **Terraform dependency ordering** — Helm releases were attempting to deploy before the EKS cluster was fully ready. Solved by relying on implicit dependencies through the provider configuration and module outputs
-- **GitHub Actions OIDC trust policy** — The IAM role's trust policy needed the exact GitHub repo and branch conditions. Debugging this required checking CloudTrail for `AssumeRoleWithWebIdentity` failures
-- **Ingress not getting an external IP** — The NGINX ingress controller needed the AWS load balancer to provision in public subnets. Required correct subnet tagging (`kubernetes.io/role/elb = 1`) in the VPC Terraform config
-- **EKS access entry conflicts** — The EKS Terraform module automatically creates a `cluster_creator` access entry which conflicted with manually defined entries, causing repeated pipeline failures. Fixed by setting `enable_cluster_creator_admin_permissions = false` and managing access entries explicitly
-- **Terraform apply locking out cluster access** — Destroying the Admin access entry mid-apply caused kubectl to lose access. Recovered by manually recreating the access entry via AWS CLI and reimporting into Terraform state
+**Helm Chart Version Conflicts**
+Some chart versions had breaking changes or deprecated values. Had to pin versions (e.g. ArgoCD `5.19.15`, kube-prometheus-stack `84.3.0`) and cross-reference changelogs to get compatible configurations.
+
+**cert-manager DNS-01 Validation Failing**
+The IRSA role wasn't being assumed correctly because the service account annotation wasn't matching. Fixed by ensuring the namespace/service account pair in the IRSA module matched exactly what cert-manager deployed.
+
+**ExternalDNS Not Updating Route 53**
+Permissions were correct but the hosted zone filter wasn't set, so external-dns was trying to manage zones it shouldn't. Adding the domain filter in the Helm values resolved it.
+
+**Terraform Dependency Ordering**
+Helm releases were attempting to deploy before the EKS cluster was fully ready. Solved by relying on implicit dependencies through the provider configuration and module outputs.
+
+**GitHub Actions OIDC Trust Policy**
+The IAM role's trust policy needed the exact GitHub repo and branch conditions. Debugging required checking CloudTrail for `AssumeRoleWithWebIdentity` failures.
+
+**Ingress Not Getting an External IP**
+The NGINX ingress controller needed the AWS load balancer to provision in public subnets. Required correct subnet tagging (`kubernetes.io/role/elb = 1`) in the VPC Terraform config.
+
+**EKS Access Entry Conflicts**
+The EKS Terraform module automatically creates a `cluster_creator` access entry which conflicted with manually defined entries, causing repeated pipeline failures. Fixed by setting `enable_cluster_creator_admin_permissions = false` and managing access entries explicitly.
+
+**Terraform Apply Locking Out Cluster Access**
+Destroying the Admin access entry mid-apply caused kubectl to lose access. Recovered by manually recreating the access entry via AWS CLI and reimporting into Terraform state.
 
 ## Cleanup
 
